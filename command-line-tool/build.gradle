@@ -1,0 +1,22 @@
+apply plugin: 'java'
+apply plugin: 'application'
+
+mainClassName = 'com.praetoriandroid.cameraremote.tool.RemoteControl'
+
+repositories {
+    mavenCentral()
+}
+
+jar {
+    baseName = 'cameraremote-tool'
+    version = '0.1.0'
+}
+
+dependencies {
+    compile 'com.google.code.gson:gson:2.2.4'
+    compile project(path: ':sony-camera-remote-lib')
+}
+
+run {
+    standardInput = System.in
+}
