@@ -1,1 +1,1 @@
-include ':sony-camera-remote-lib', ':command-line-tool'
+include ':sony-camera-remote-lib', ':command-line-tool', ':android-app'

@@ -1,0 +1,9 @@
+Sony Camera Remote API library and tools.
+
+sony-camera-remote-lib: Java implementation for Sony Camera Remote API.
+
+command-line-tool: Java command line tool that uses the library. For testing/
+debug porposes. Also you can use it to interact with the camera from your PC.
+
+android-app: Android 'Sony Camera Remote Control' application that also uses
+the library.
