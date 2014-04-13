@@ -19,8 +19,8 @@ import com.praetoriandroid.cameraremote.rpc.GetEventResponse;
 import com.praetoriandroid.cameraremote.rpc.GetMethodTypesRequest;
 import com.praetoriandroid.cameraremote.rpc.GetMethodTypesResponse;
 import com.praetoriandroid.cameraremote.rpc.GetVersionsRequest;
-import com.praetoriandroid.cameraremote.rpc.StartLiveviewRequest;
-import com.praetoriandroid.cameraremote.rpc.StartLiveviewResponse;
+import com.praetoriandroid.cameraremote.rpc.StartLiveViewRequest;
+import com.praetoriandroid.cameraremote.rpc.StartLiveViewResponse;
 import com.praetoriandroid.cameraremote.rpc.StopLiveviewRequest;
 
 import java.io.IOException;
@@ -341,9 +341,9 @@ public class RemoteControl implements Logger {
             @Override
             void process(final RemoteControl remoteControl, String... args)
                     throws IOException, HttpClient.BadHttpResponseException {
-                remoteControl.sendCommand(new StartLiveviewRequest(), new SuccessfulResponseHandler<StartLiveviewResponse>() {
+                remoteControl.sendCommand(new StartLiveViewRequest(), new SuccessfulResponseHandler<StartLiveViewResponse>() {
                     @Override
-                    public void onSuccess(StartLiveviewResponse response) {
+                    public void onSuccess(StartLiveViewResponse response) {
                         remoteControl.info(response.getUrl());
                     }
                 });

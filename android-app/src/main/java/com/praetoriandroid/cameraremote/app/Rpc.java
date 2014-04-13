@@ -9,8 +9,8 @@ import com.praetoriandroid.cameraremote.RpcClient;
 import com.praetoriandroid.cameraremote.SsdpClient;
 import com.praetoriandroid.cameraremote.rpc.BaseRequest;
 import com.praetoriandroid.cameraremote.rpc.BaseResponse;
-import com.praetoriandroid.cameraremote.rpc.StartLiveviewRequest;
-import com.praetoriandroid.cameraremote.rpc.StartLiveviewResponse;
+import com.praetoriandroid.cameraremote.rpc.StartLiveViewRequest;
+import com.praetoriandroid.cameraremote.rpc.StartLiveViewResponse;
 
 import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.EBean;
@@ -217,9 +217,9 @@ public class Rpc {
 
     public void startLiveView(final LiveViewCallback callback) {
         liveViewInProgress = true;
-        sendRequest(new StartLiveviewRequest(), liveViewFetcher, new ResponseHandler<StartLiveviewResponse>() {
+        sendRequest(new StartLiveViewRequest(), liveViewFetcher, new ResponseHandler<StartLiveViewResponse>() {
             @Override
-            public void onSuccess(StartLiveviewResponse response) {
+            public void onSuccess(StartLiveViewResponse response) {
                 onLiveViewStarted(response.getUrl(), callback);
             }
 

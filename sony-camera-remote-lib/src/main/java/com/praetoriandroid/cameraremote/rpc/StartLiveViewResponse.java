@@ -1,6 +1,6 @@
 package com.praetoriandroid.cameraremote.rpc;
 
-public class StartLiveviewResponse extends BaseResponse<String> {
+public class StartLiveViewResponse extends BaseResponse<String> {
 
     @Override
     public void validate() throws IllegalResponseException {
