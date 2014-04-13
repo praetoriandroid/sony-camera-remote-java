@@ -5,11 +5,11 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import org.androidannotations.annotations.EView;
+import org.androidannotations.annotations.UiThread;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -35,7 +35,7 @@ public class LiveView extends SurfaceView implements SurfaceHolder.Callback {
 
         private final SurfaceHolder surfaceHolder;
         private final BlockingQueue<BitmapHolder> frameQueue = new LinkedBlockingQueue<BitmapHolder>(2);
-        private boolean run;
+        private volatile boolean run;
         private Rect viewRect = new Rect();
         private int canvasWidth = 1;
         private int canvasHeight = 1;
@@ -127,7 +127,7 @@ public class LiveView extends SurfaceView implements SurfaceHolder.Callback {
         }
     }
 
-    private LiveViewThread liveViewThread;
+    private volatile LiveViewThread liveViewThread;
 
     public LiveView(Context context) {
         this(context, null, 0);
@@ -154,6 +154,7 @@ public class LiveView extends SurfaceView implements SurfaceHolder.Callback {
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
         liveViewThread.stopShow();
+        liveViewThread = null;
     }
 
     @Override
@@ -162,7 +163,10 @@ public class LiveView extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void putFrame(Bitmap frame) {
-        liveViewThread.putFrame(frame);
+        LiveViewThread thread = liveViewThread;
+        if (thread != null) {
+            thread.putFrame(frame);
+        }
     }
 
 }
