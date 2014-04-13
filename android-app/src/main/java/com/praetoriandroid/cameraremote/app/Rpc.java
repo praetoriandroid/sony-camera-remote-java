@@ -4,10 +4,13 @@ import android.util.Log;
 
 import com.praetoriandroid.cameraremote.DeviceDescription;
 import com.praetoriandroid.cameraremote.HttpClient;
+import com.praetoriandroid.cameraremote.LiveViewFetcher;
 import com.praetoriandroid.cameraremote.RpcClient;
 import com.praetoriandroid.cameraremote.SsdpClient;
 import com.praetoriandroid.cameraremote.rpc.BaseRequest;
 import com.praetoriandroid.cameraremote.rpc.BaseResponse;
+import com.praetoriandroid.cameraremote.rpc.StartLiveviewRequest;
+import com.praetoriandroid.cameraremote.rpc.StartLiveviewResponse;
 
 import org.androidannotations.annotations.Background;
 import org.androidannotations.annotations.EBean;
@@ -35,15 +38,18 @@ public class Rpc {
         void onFail(Throwable e);
     }
 
+    public interface LiveViewCallback {
+        void onNextFrame(LiveViewFetcher.Frame frame);
+        void onError(Throwable e);
+    }
+
     private RpcClient rpcClient;
-
     private Throwable initializationError;
-
     private final Set<InitCallback> initializationCallbacks = new HashSet<InitCallback>();
-
     private boolean initialized;
-
     private final Map<Object, ResponseHandler<?>> responseHandlers = new HashMap<Object, ResponseHandler<?>>();
+    private LiveViewFetcher liveViewFetcher = new LiveViewFetcher();
+    private volatile boolean liveViewInProgress;
 
     public Rpc() {
         initialized = false;
@@ -181,6 +187,60 @@ public class Rpc {
         ResponseHandler<Response> handler = (ResponseHandler<Response>) responseHandlers.get(tag);
         if (handler != null) {
             handler.onFail(e);
+        }
+    }
+
+    void onLiveViewStarted(final String url, final LiveViewCallback callback) {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    liveViewFetcher.connect(url);
+                    while (liveViewInProgress) {
+                        LiveViewFetcher.Frame frame = liveViewFetcher.getNextFrame();
+                        callback.onNextFrame(frame);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    callback.onError(e);
+                } catch (HttpClient.BadHttpResponseException e) {
+                    e.printStackTrace();
+                    callback.onError(e);
+                } catch (LiveViewFetcher.ParseException e) {
+                    e.printStackTrace();
+                    callback.onError(e);
+                } catch (LiveViewFetcher.DisconnectedException ignored) {
+                }
+            }
+        }.start();
+    }
+
+    public void startLiveView(final LiveViewCallback callback) {
+        liveViewInProgress = true;
+        sendRequest(new StartLiveviewRequest(), liveViewFetcher, new ResponseHandler<StartLiveviewResponse>() {
+            @Override
+            public void onSuccess(StartLiveviewResponse response) {
+                onLiveViewStarted(response.getUrl(), callback);
+            }
+
+            @Override
+            public void onErrorResponse(int errorCode) {
+                callback.onError(new IllegalStateException("HTTP error: " + errorCode));
+            }
+
+            @Override
+            public void onFail(Throwable e) {
+                callback.onError(e);
+            }
+        });
+    }
+
+    public void stopLiveView() {
+        try {
+            liveViewInProgress = false;
+            liveViewFetcher.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 

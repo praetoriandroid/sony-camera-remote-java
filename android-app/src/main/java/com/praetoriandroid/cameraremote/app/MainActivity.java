@@ -1,25 +1,25 @@
 package com.praetoriandroid.cameraremote.app;
 
-import android.support.v7.app.ActionBarActivity;
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.util.Log;
 import android.widget.Button;
 import android.widget.Toast;
 
+import com.praetoriandroid.cameraremote.LiveViewFetcher;
 import com.praetoriandroid.cameraremote.rpc.ActTakePictureRequest;
 import com.praetoriandroid.cameraremote.rpc.ActTakePictureResponse;
 
-import org.androidannotations.annotations.AfterInject;
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Bean;
 import org.androidannotations.annotations.Click;
 import org.androidannotations.annotations.EActivity;
-import org.androidannotations.annotations.OptionsItem;
-import org.androidannotations.annotations.OptionsMenu;
+import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
 
 @EActivity(R.layout.activity_main)
-@OptionsMenu(R.menu.main)
-public class MainActivity extends ActionBarActivity implements Rpc.InitCallback {
+public class MainActivity extends Activity implements Rpc.InitCallback {
 
     @ViewById
     LiveView liveView;
@@ -39,11 +39,7 @@ public class MainActivity extends ActionBarActivity implements Rpc.InitCallback 
     protected void onDestroy() {
         super.onDestroy();
         rpc.unregisterInitCallback(this);
-    }
-
-    @OptionsItem
-    void settingsSelected() {
-        Toast.makeText(this, "settings", Toast.LENGTH_SHORT).show();
+        rpc.stopLiveView();
     }
 
     @Click
@@ -76,7 +72,27 @@ public class MainActivity extends ActionBarActivity implements Rpc.InitCallback 
 
     @Override
     public void onRpcInitSucceeded() {
+        if (isFinishing()) {
+            return;
+        }
         shot.setEnabled(true);
+        rpc.startLiveView(new Rpc.LiveViewCallback() {
+            @Override
+            public void onNextFrame(LiveViewFetcher.Frame frame) {
+                Bitmap bitmap = BitmapFactory.decodeByteArray(frame.getBuffer(), 0, frame.getSize());
+                updateLiveView(bitmap);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                Log.e("@@@@@", "Live view error: " + e);
+            }
+        });
+    }
+
+    @UiThread
+    void updateLiveView(Bitmap frame) {
+         liveView.putFrame(frame);
     }
 
     @Override

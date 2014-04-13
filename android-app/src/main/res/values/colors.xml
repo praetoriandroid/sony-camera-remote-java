@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="shot_button_normal">#80287aa9</color>
+    <color name="shot_button_disabled">#60808080</color>
+</resources>
