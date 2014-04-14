@@ -169,7 +169,9 @@ public class LiveViewFetcher {
 
     public void disconnect() throws IOException {
         closed = true;
-        inputStream.close();
+        if (inputStream != null) {
+            inputStream.close();
+        }
     }
 
     public Frame getNextFrame() throws IOException, ParseException, DisconnectedException {
