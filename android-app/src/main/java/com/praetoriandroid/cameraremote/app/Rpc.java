@@ -52,13 +52,14 @@ public class Rpc {
     private volatile boolean liveViewInProgress;
 
     public Rpc() {
-        initialized = false;
         init();
     }
 
     @Background (serial = RPC_NETWORK)
     void init() {
         try {
+            initialized = false;
+            initializationError = null;
             SsdpClient ssdpClient = new SsdpClient();
             String deviceDescriptionUrl = ssdpClient.getDeviceDescriptionUrl();
             DeviceDescription description = new DeviceDescription(deviceDescriptionUrl);
@@ -73,13 +74,6 @@ public class Rpc {
         } catch (IOException e) {
             onInitFailed(e);
         }
-    }
-
-    @UiThread (propagation = UiThread.Propagation.REUSE)
-    public void reinit() {
-        initialized = false;
-        initializationError = null;
-        init();
     }
 
     @UiThread

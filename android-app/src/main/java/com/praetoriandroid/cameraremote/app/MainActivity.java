@@ -30,14 +30,15 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
     @Bean
     Rpc rpc;
 
-    @AfterViews
-    void init() {
+    @Override
+    protected void onStart() {
+        super.onStart();
         rpc.registerInitCallback(this);
     }
 
     @Override
-    protected void onDestroy() {
-        super.onDestroy();
+    protected void onStop() {
+        super.onStop();
         rpc.unregisterInitCallback(this);
         rpc.stopLiveView();
     }
