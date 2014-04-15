@@ -105,6 +105,8 @@ public class MainActivity extends Activity implements Rpc.ConnectionListener {
             @Override
             public void onError(Throwable e) {
                 Log.e("@@@@@", "Live view error: " + e);
+                rpc.stopLiveView();
+                showConnectionErrorDialog();
             }
         });
     }
@@ -136,19 +138,23 @@ public class MainActivity extends Activity implements Rpc.ConnectionListener {
         rpc.connect();
     }
 
-    private void showProgress() {
+    @UiThread (propagation = UiThread.Propagation.REUSE)
+    void showProgress() {
         progress.setVisibility(View.VISIBLE);
     }
 
-    private void dismissProgress() {
+    @UiThread (propagation = UiThread.Propagation.REUSE)
+    void dismissProgress() {
         progress.setVisibility(View.INVISIBLE);
     }
 
-    private void showConnectionErrorDialog() {
+    @UiThread (propagation = UiThread.Propagation.REUSE)
+    void showConnectionErrorDialog() {
         connectionErrorDialog.setVisibility(View.VISIBLE);
     }
 
-    private void dismissConnectionErrorDialog() {
+    @UiThread (propagation = UiThread.Propagation.REUSE)
+    void dismissConnectionErrorDialog() {
         connectionErrorDialog.setVisibility(View.INVISIBLE);
     }
 
