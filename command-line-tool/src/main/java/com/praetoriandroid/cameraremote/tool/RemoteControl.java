@@ -171,7 +171,7 @@ public class RemoteControl implements Logger {
     private String discoverCameraServiceUrl(Cache config) throws SsdpClient.SsdpException, IOException, DeviceDescription.ServiceNotSupportedException {
         SsdpClient ssdpClient = new SsdpClient();
         String deviceDescriptionUrl = ssdpClient.getDeviceDescriptionUrl();
-        DeviceDescription description = new DeviceDescription(deviceDescriptionUrl);
+        DeviceDescription description = new DeviceDescription.Fetcher().fetch(deviceDescriptionUrl);
         debug(description);
         String cameraServiceUrl = description.getServiceUrl(DeviceDescription.CAMERA);
         config.put(KEY_CAMERA_SERVICE_URL, cameraServiceUrl);
@@ -277,7 +277,7 @@ public class RemoteControl implements Logger {
                 String url = remoteControl.getLastFetchUrl();
                 if (url != null) {
                     String output = url.replaceFirst(".*/", "");
-                    remoteControl.httpClient.fetchFile(url, output);
+                    remoteControl.httpClient.getFile(url, output);
                     remoteControl.info("Picture saved to " + output);
                 } else {
                     System.err.println("Url is unavailable. You need to call appropriate command first. For example "

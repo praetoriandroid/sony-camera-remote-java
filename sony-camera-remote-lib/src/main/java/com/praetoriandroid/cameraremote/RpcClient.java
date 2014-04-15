@@ -28,6 +28,10 @@ public class RpcClient {
         this.cameraServiceUrl = cameraServiceUrl;
     }
 
+    public void setConnectionTimeout(int timeout) {
+        httpClient.setConnectionTimeout(timeout);
+    }
+
     public void setLogger(Logger logger) {
         this.logger = logger;
     }
@@ -69,7 +73,7 @@ public class RpcClient {
             throws IOException, HttpClient.BadHttpResponseException {
         String requestText = gson.toJson(request);
         debug("Request: %s", requestText);
-        String responseText = httpClient.fetchText(cameraServiceUrl, HttpClient.Method.POST, requestText);
+        String responseText = httpClient.fetchTextByPost(cameraServiceUrl, requestText);
         debug("Response: %s", responseText);
         try {
             Response response = request.parseResponse(gson, responseText);

@@ -21,84 +21,80 @@ public class DeviceDescription {
 
     private Map<String, String> services;
 
-    public DeviceDescription(String url) throws IOException {
-        InputStream dataStream = null;
-        try {
-            HttpClient httpClient = new HttpClient();
-            dataStream = httpClient.fetch(url);
-            services = parse(dataStream);
-            dataStream.close();
-        } catch (HttpClient.BadHttpResponseException e) {
-            throw new IOException(e);
-        } finally {
-            if (dataStream != null) {
+    public static class Fetcher {
+
+        private HttpClient httpClient = new HttpClient();
+
+        public DeviceDescription fetch(String url) throws IOException {
+            InputStream dataStream = null;
+            try {
+                dataStream = httpClient.get(url);
+                Map<String, String> services = parse(dataStream);
                 dataStream.close();
+                return new DeviceDescription(services);
+            } catch (HttpClient.BadHttpResponseException e) {
+                throw new IOException(e);
+            } finally {
+                if (dataStream != null) {
+                    dataStream.close();
+                }
             }
         }
-    }
 
-    public String getServiceUrl(String serviceType) throws ServiceNotSupportedException {
-        String url = services.get(serviceType);
-        if (url == null) {
-            throw new ServiceNotSupportedException();
+        public Fetcher setConnectionTimeout(int timeout) {
+            httpClient.setConnectionTimeout(timeout);
+            return this;
         }
-        return url + '/' + serviceType;
-    }
 
-    @Override
-    public String toString() {
-        return services.toString();
-    }
+        private Map<String, String> parse(InputStream dataStream) throws ParseException {
+            try {
+                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+                DocumentBuilder builder = factory.newDocumentBuilder();
+                Document document = builder.parse(dataStream);
 
-    private Map<String, String> parse(InputStream dataStream) throws ParseException {
-        try {
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document document = builder.parse(dataStream);
-
-            Map<String, String> services = new HashMap<String, String>();
+                Map<String, String> services = new HashMap<String, String>();
 
             /*
              * This is simplified device description parsing: we assume that the XML document contains the only
              * <device> element with the only <av:X_ScalarWebAPI_DeviceInfo> child element with the only
              * <av:X_ScalarWebAPI_ServiceList> element where all <av:X_ScalarWebAPI_Service> are located.
              */
-            NodeList serviceList = document.getElementsByTagName("av:X_ScalarWebAPI_Service");
-            for (int i = 0; i < serviceList.getLength(); i++) {
-                Element service = (Element) serviceList.item(i);
-                Element serviceTypeElement = getTheOnlyChild(service, "av:X_ScalarWebAPI_ServiceType");
-                String serviceType = getElementContent(serviceTypeElement);
-                Element actionListUrlElement = getTheOnlyChild(service, "av:X_ScalarWebAPI_ActionList_URL");
-                String actionListUrl = getElementContent(actionListUrlElement);
-                services.put(serviceType, actionListUrl);
+                NodeList serviceList = document.getElementsByTagName("av:X_ScalarWebAPI_Service");
+                for (int i = 0; i < serviceList.getLength(); i++) {
+                    Element service = (Element) serviceList.item(i);
+                    Element serviceTypeElement = getTheOnlyChild(service, "av:X_ScalarWebAPI_ServiceType");
+                    String serviceType = getElementContent(serviceTypeElement);
+                    Element actionListUrlElement = getTheOnlyChild(service, "av:X_ScalarWebAPI_ActionList_URL");
+                    String actionListUrl = getElementContent(actionListUrlElement);
+                    services.put(serviceType, actionListUrl);
+                }
+                return services;
+            } catch (ParserConfigurationException e) {
+                throw new ParseException(e);
+            } catch (SAXException e) {
+                throw new InvalidDataFormatException(e);
+            } catch (IOException e) {
+                throw new ParseException(e);
             }
-            return services;
-        } catch (ParserConfigurationException e) {
-            throw new ParseException(e);
-        } catch (SAXException e) {
-            throw new InvalidDataFormatException(e);
-        } catch (IOException e) {
-            throw new ParseException(e);
         }
-    }
 
-    private Element getTheOnlyChild(Element parent, String elementName) throws InvalidDataFormatException {
-        NodeList children = parent.getElementsByTagName(elementName);
-        if (children.getLength() != 1) {
-            throw new InvalidDataFormatException("Element <" + parent.getTagName() + "> should contain the only child <"
-                    + elementName + "> element");
+        private Element getTheOnlyChild(Element parent, String elementName) throws InvalidDataFormatException {
+            NodeList children = parent.getElementsByTagName(elementName);
+            if (children.getLength() != 1) {
+                throw new InvalidDataFormatException("Element <" + parent.getTagName() + "> should contain the only child <"
+                        + elementName + "> element");
+            }
+            return (Element) children.item(0);
         }
-        return (Element) children.item(0);
-    }
 
-    private String getElementContent(Element element) throws InvalidDataFormatException {
-        Node child = element.getFirstChild();
-        if (child.getNodeType() != Node.TEXT_NODE) {
-            throw new InvalidDataFormatException("Element <" + element.getTagName()
-                    + "> should contain the only text child node");
+        private String getElementContent(Element element) throws InvalidDataFormatException {
+            Node child = element.getFirstChild();
+            if (child.getNodeType() != Node.TEXT_NODE) {
+                throw new InvalidDataFormatException("Element <" + element.getTagName()
+                        + "> should contain the only text child node");
+            }
+            return child.getNodeValue();
         }
-        return child.getNodeValue();
-    }
 
 //    private void dumpElement(Element element, int padding) {
 //        System.out.print(getPadding(padding));
@@ -130,6 +126,25 @@ public class DeviceDescription {
 //        }
 //        return sb.toString();
 //    }
+
+    }
+
+    private DeviceDescription(Map<String, String> services) throws IOException {
+        this.services = services;
+    }
+
+    public String getServiceUrl(String serviceType) throws ServiceNotSupportedException {
+        String url = services.get(serviceType);
+        if (url == null) {
+            throw new ServiceNotSupportedException();
+        }
+        return url + '/' + serviceType;
+    }
+
+    @Override
+    public String toString() {
+        return services.toString();
+    }
 
     public static class ParseException extends IOException {
         public ParseException(String message) {

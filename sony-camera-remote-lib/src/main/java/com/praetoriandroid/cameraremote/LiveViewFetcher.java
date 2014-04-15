@@ -162,9 +162,13 @@ public class LiveViewFetcher {
     private Frame reusableFrame = new Frame();
     private boolean closed;
 
+    public void setConnectionTimeout(int timeout) {
+        httpClient.setConnectionTimeout(timeout);
+    }
+
     public void connect(String url) throws IOException, HttpClient.BadHttpResponseException {
         closed = false;
-        inputStream = httpClient.fetch(url);
+        inputStream = httpClient.get(url);
     }
 
     public void disconnect() throws IOException {

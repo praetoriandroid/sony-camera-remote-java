@@ -27,6 +27,7 @@ public class Rpc {
 
     private static final String RPC_NETWORK = "RPC network";
     private static final int SSDP_TIMEOUT = 1000;
+    private static final int CONNECTION_TIMEOUT = 1000;
 
     public interface ConnectionListener {
         void onConnected();
@@ -53,6 +54,7 @@ public class Rpc {
     private volatile boolean liveViewInProgress;
 
     public Rpc() {
+        liveViewFetcher.setConnectionTimeout(CONNECTION_TIMEOUT);
         connect();
     }
 
@@ -64,9 +66,12 @@ public class Rpc {
             SsdpClient ssdpClient = new SsdpClient();
             ssdpClient.setSearchTimeout(SSDP_TIMEOUT);
             String deviceDescriptionUrl = ssdpClient.getDeviceDescriptionUrl();
-            DeviceDescription description = new DeviceDescription(deviceDescriptionUrl);
+            DeviceDescription description = new DeviceDescription.Fetcher()
+                    .setConnectionTimeout(CONNECTION_TIMEOUT)
+                    .fetch(deviceDescriptionUrl);
             String cameraServiceUrl = description.getServiceUrl(DeviceDescription.CAMERA);
             rpcClient = new RpcClient(cameraServiceUrl);
+            rpcClient.setConnectionTimeout(CONNECTION_TIMEOUT);
             rpcClient.sayHello();
             onConnected(cameraServiceUrl);
         } catch (SsdpClient.SsdpException e) {

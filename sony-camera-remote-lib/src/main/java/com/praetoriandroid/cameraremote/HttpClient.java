@@ -17,13 +17,27 @@ public class HttpClient {
         POST
     }
 
-    private static final int CONNECTION_TIMEOUT = 3000;
+    private static final int DEFAULT_CONNECTION_TIMEOUT = 3000;
 
-    public InputStream fetch(String urlString) throws IOException, BadHttpResponseException {
+    private int connectionTimeout = DEFAULT_CONNECTION_TIMEOUT;
+
+    public void setConnectionTimeout(int connectionTimeout) {
+        this.connectionTimeout = connectionTimeout;
+    }
+
+    public int getConnectionTimeout() {
+        return connectionTimeout;
+    }
+
+    public InputStream get(String urlString) throws IOException, BadHttpResponseException {
         return fetch(urlString, Method.GET, null);
     }
 
-    public InputStream fetch(String urlString, Method method, String postData) throws IOException, BadHttpResponseException {
+    public InputStream post(String urlString, String data) throws IOException, BadHttpResponseException {
+        return fetch(urlString, Method.POST, data);
+    }
+
+    private InputStream fetch(String urlString, Method method, String postData) throws IOException, BadHttpResponseException {
         if (postData != null && method != Method.POST) {
             throw new IllegalArgumentException();
         }
@@ -36,7 +50,7 @@ public class HttpClient {
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setRequestMethod(method.name());
-        connection.setConnectTimeout(CONNECTION_TIMEOUT);
+        connection.setConnectTimeout(connectionTimeout);
 //        connection.setReadTimeout(timeout);
         connection.setDoInput(true);
 
@@ -58,10 +72,10 @@ public class HttpClient {
         return connection.getInputStream();
     }
 
-    public String fetchText(String url, Method method, String postData) throws IOException, BadHttpResponseException {
+    public String fetchTextByPost(String url, String postData) throws IOException, BadHttpResponseException {
         InputStream inputStream = null;
         try {
-            inputStream = fetch(url, method, postData);
+            inputStream = post(url, postData);
             return streamToString(inputStream);
         } finally {
             if (inputStream != null) {
@@ -70,7 +84,7 @@ public class HttpClient {
         }
     }
 
-    public void fetchFile(String url, String outputPath) throws IOException, BadHttpResponseException {
+    public void getFile(String url, String outputPath) throws IOException, BadHttpResponseException {
         InputStream inputStream = null;
         OutputStream outputStream = null;
         try {
@@ -80,7 +94,7 @@ public class HttpClient {
                 throw new IOException("Could not find/create directory: " + dir.getAbsolutePath());
             }
             outputStream = new FileOutputStream(file);
-            inputStream = fetch(url);
+            inputStream = get(url);
             copyFile(inputStream, outputStream);
         } finally {
             try {
