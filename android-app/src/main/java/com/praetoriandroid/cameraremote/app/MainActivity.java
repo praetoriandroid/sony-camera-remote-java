@@ -24,7 +24,7 @@ import org.androidannotations.annotations.UiThread;
 import org.androidannotations.annotations.ViewById;
 
 @EActivity(R.layout.activity_main)
-public class MainActivity extends Activity implements Rpc.InitCallback {
+public class MainActivity extends Activity implements Rpc.ConnectionListener {
 
     @ViewById
     LiveView liveView;
@@ -87,7 +87,7 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
 
     @Override
     @UiThread (propagation = UiThread.Propagation.REUSE)
-    public void onRpcInitSucceeded() {
+    public void onConnected() {
         dismissProgress();
 
         if (isFinishing()) {
@@ -111,7 +111,7 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
 
     @Override
     @UiThread (propagation = UiThread.Propagation.REUSE)
-    public void onRpcInitFailed(Throwable e) {
+    public void onConnectionFailed(Throwable e) {
         dismissProgress();
         showConnectionErrorDialog();
     }
@@ -133,7 +133,7 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
     void reconnectClicked() {
         dismissConnectionErrorDialog();
         showProgress();
-        rpc.init();
+        rpc.connect();
     }
 
     private void showProgress() {

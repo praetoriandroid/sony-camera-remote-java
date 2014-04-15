@@ -27,9 +27,9 @@ public class Rpc {
 
     private static final String RPC_NETWORK = "RPC network";
 
-    public interface InitCallback {
-        void onRpcInitSucceeded();
-        void onRpcInitFailed(Throwable e);
+    public interface ConnectionListener {
+        void onConnected();
+        void onConnectionFailed(Throwable e);
     }
 
     public interface ResponseHandler<Response extends BaseResponse<?>> {
@@ -45,18 +45,18 @@ public class Rpc {
 
     private RpcClient rpcClient;
     private Throwable initializationError;
-    private final Set<InitCallback> initializationCallbacks = new HashSet<InitCallback>();
+    private final Set<ConnectionListener> connectionListeners = new HashSet<ConnectionListener>();
     private boolean initialized;
     private final Map<Object, ResponseHandler<?>> responseHandlers = new HashMap<Object, ResponseHandler<?>>();
     private LiveViewFetcher liveViewFetcher = new LiveViewFetcher();
     private volatile boolean liveViewInProgress;
 
     public Rpc() {
-        init();
+        connect();
     }
 
     @Background (serial = RPC_NETWORK)
-    public void init() {
+    public void connect() {
         try {
             initialized = false;
             initializationError = null;
@@ -66,52 +66,49 @@ public class Rpc {
             String cameraServiceUrl = description.getServiceUrl(DeviceDescription.CAMERA);
             rpcClient = new RpcClient(cameraServiceUrl);
             rpcClient.sayHello();
-            onInitSucceeded(cameraServiceUrl);
+            onConnected(cameraServiceUrl);
         } catch (SsdpClient.SsdpException e) {
-            onInitFailed(e);
+            onConnectionFailed(e);
         } catch (DeviceDescription.ServiceNotSupportedException e) {
-            onInitFailed(e);
+            onConnectionFailed(e);
         } catch (IOException e) {
-            onInitFailed(e);
+            onConnectionFailed(e);
         }
     }
 
     @UiThread
-    void onInitSucceeded(String cameraServiceUrl) {
+    void onConnected(String cameraServiceUrl) {
         initialized = true;
-        for (InitCallback callback : initializationCallbacks) {
-            callback.onRpcInitSucceeded();
+        for (ConnectionListener callback : connectionListeners) {
+            callback.onConnected();
         }
-//        initializationCallbacks.clear();
     }
 
     @UiThread
-    void onInitFailed(Throwable e) {
-        Log.e("@@@@@", "RPC init failed", e);
+    void onConnectionFailed(Throwable e) {
+        Log.e("@@@@@", "RPC connect failed", e);
         initialized = true;
         initializationError = e;
-        for (InitCallback callback : initializationCallbacks) {
-            callback.onRpcInitFailed(e);
+        for (ConnectionListener callback : connectionListeners) {
+            callback.onConnectionFailed(e);
         }
-//        initializationCallbacks.clear();
     }
 
     @UiThread (propagation = UiThread.Propagation.REUSE)
-    public void registerInitCallback(InitCallback callback) {
+    public void registerInitCallback(ConnectionListener callback) {
         if (initialized) {
             if (initializationError == null) {
-                callback.onRpcInitSucceeded();
+                callback.onConnected();
             } else {
-                callback.onRpcInitFailed(initializationError);
+                callback.onConnectionFailed(initializationError);
             }
-        }// else {
-            initializationCallbacks.add(callback);
-        //}
+        }
+        connectionListeners.add(callback);
     }
 
     @UiThread (propagation = UiThread.Propagation.REUSE)
-    public void unregisterInitCallback(InitCallback callback) {
-        initializationCallbacks.remove(callback);
+    public void unregisterInitCallback(ConnectionListener callback) {
+        connectionListeners.remove(callback);
     }
 
     @UiThread (propagation = UiThread.Propagation.REUSE)
