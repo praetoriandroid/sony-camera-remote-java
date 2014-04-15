@@ -56,7 +56,7 @@ public class Rpc {
     }
 
     @Background (serial = RPC_NETWORK)
-    void init() {
+    public void init() {
         try {
             initialized = false;
             initializationError = null;
@@ -64,9 +64,9 @@ public class Rpc {
             String deviceDescriptionUrl = ssdpClient.getDeviceDescriptionUrl();
             DeviceDescription description = new DeviceDescription(deviceDescriptionUrl);
             String cameraServiceUrl = description.getServiceUrl(DeviceDescription.CAMERA);
-            onInitSucceeded(cameraServiceUrl);
             rpcClient = new RpcClient(cameraServiceUrl);
             rpcClient.sayHello();
+            onInitSucceeded(cameraServiceUrl);
         } catch (SsdpClient.SsdpException e) {
             onInitFailed(e);
         } catch (DeviceDescription.ServiceNotSupportedException e) {

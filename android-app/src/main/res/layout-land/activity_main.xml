@@ -1,16 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@android:color/black"
     tools:context="com.praetoriandroid.cameraremote.app.MainActivity">
 
     <com.praetoriandroid.cameraremote.app.LiveView_
         android:id="@+id/liveView"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        />
+        android:layout_height="match_parent" />
 
-    <Button android:id="@+id/shot"
+    <Button
+        android:id="@+id/shot"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
@@ -18,7 +20,14 @@
         android:layout_margin="10dp"
         android:background="@drawable/shot_button"
         android:contentDescription="@string/cd_shot"
-        android:enabled="false"
-        />
+        android:enabled="false" />
+
+    <include
+        android:id="@+id/progress"
+        layout="@layout/full_screen_progress" />
+
+    <include
+        android:id="@+id/connection_error_dialog"
+        layout="@layout/connection_error_dialog" />
 
 </RelativeLayout>

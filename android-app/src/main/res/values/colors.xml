@@ -2,4 +2,6 @@
 <resources>
     <color name="shot_button_normal">#80287aa9</color>
     <color name="shot_button_disabled">#60808080</color>
+    <color name="cover">#80404040</color>
+    <color name="progress_label">#e0e0e0</color>
 </resources>

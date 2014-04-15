@@ -1,10 +1,15 @@
 package com.praetoriandroid.cameraremote.app;
 
 import android.app.Activity;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.provider.Settings;
 import android.util.Log;
+import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.praetoriandroid.cameraremote.LiveViewFetcher;
@@ -27,8 +32,22 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
     @ViewById
     Button shot;
 
+    @ViewById
+    View progress;
+
+    @ViewById
+    View connectionErrorDialog;
+
+    @ViewById
+    TextView progressLabel;
+
     @Bean
     Rpc rpc;
+
+    @AfterViews
+    void init() {
+        progressLabel.setText(R.string.connection_label);
+    }
 
     @Override
     protected void onStart() {
@@ -45,7 +64,6 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
 
     @Click
     void shotClicked() {
-        Toast.makeText(this, "shot", Toast.LENGTH_SHORT).show();
         shot.setEnabled(false);
         rpc.sendRequest(new ActTakePictureRequest(), shot, new Rpc.ResponseHandler<ActTakePictureResponse>() {
             @Override
@@ -56,32 +74,32 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
             @Override
             public void onErrorResponse(int errorCode) {
                 Log.e("@@@@@", "Shot failed: " + errorCode);
-                Toast.makeText(MainActivity.this, "Shot failed: " + errorCode, Toast.LENGTH_SHORT)
-                        .show();
                 shot.setEnabled(true);
             }
 
             @Override
             public void onFail(Throwable e) {
                 Log.e("@@@@@", "Shot failed", e);
-                Toast.makeText(MainActivity.this, "Shot failed: " + e.toString(), Toast.LENGTH_SHORT)
-                        .show();
                 shot.setEnabled(true);
             }
         });
     }
 
     @Override
+    @UiThread (propagation = UiThread.Propagation.REUSE)
     public void onRpcInitSucceeded() {
+        dismissProgress();
+
         if (isFinishing()) {
             return;
         }
+
         shot.setEnabled(true);
         rpc.startLiveView(new Rpc.LiveViewCallback() {
             @Override
             public void onNextFrame(LiveViewFetcher.Frame frame) {
                 Bitmap bitmap = BitmapFactory.decodeByteArray(frame.getBuffer(), 0, frame.getSize());
-                updateLiveView(bitmap);
+                liveView.putFrame(bitmap);
             }
 
             @Override
@@ -91,13 +109,47 @@ public class MainActivity extends Activity implements Rpc.InitCallback {
         });
     }
 
-    @UiThread
-    void updateLiveView(Bitmap frame) {
-         liveView.putFrame(frame);
+    @Override
+    @UiThread (propagation = UiThread.Propagation.REUSE)
+    public void onRpcInitFailed(Throwable e) {
+        dismissProgress();
+        showConnectionErrorDialog();
     }
 
-    @Override
-    public void onRpcInitFailed(Throwable e) {
-        Toast.makeText(this, "RPC initialization failed", Toast.LENGTH_SHORT).show();
+    @Click
+    void wiFiSettingsClicked() {
+        dismissConnectionErrorDialog();
+        try {
+            Intent intent = new Intent(Settings.ACTION_WIFI_SETTINGS);
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            showConnectionErrorDialog();
+            Toast.makeText(this, R.string.error_no_wi_fi_settings_activity, Toast.LENGTH_SHORT)
+                    .show();
+        }
     }
+
+    @Click
+    void reconnectClicked() {
+        dismissConnectionErrorDialog();
+        showProgress();
+        rpc.init();
+    }
+
+    private void showProgress() {
+        progress.setVisibility(View.VISIBLE);
+    }
+
+    private void dismissProgress() {
+        progress.setVisibility(View.INVISIBLE);
+    }
+
+    private void showConnectionErrorDialog() {
+        connectionErrorDialog.setVisibility(View.VISIBLE);
+    }
+
+    private void dismissConnectionErrorDialog() {
+        connectionErrorDialog.setVisibility(View.INVISIBLE);
+    }
+
 }

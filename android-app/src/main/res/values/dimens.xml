@@ -5,4 +5,7 @@
 
     <dimen name="shot_button_size">60dp</dimen>
 
+    <dimen name="default_spacing">15dp</dimen>
+    <dimen name="large_spacing">45dp</dimen>
+
     </resources>

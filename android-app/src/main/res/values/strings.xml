@@ -4,5 +4,11 @@
     <string name="app_name">Sony Camera Remote Control</string>
     <string name="action_settings">Settings</string>
     <string name="cd_shot">shot</string>
+    <string name="connection_label">Connecting to the camera</string>
+    <!--<string name="connection_error_title">Connection error</string>-->
+    <string name="connection_error_description">You need to connect to the camera Wi-Fi.</string>
+    <string name="wi_fi_settings">Wi-Fi settings</string>
+    <string name="reconnect">Reconnect</string>
+    <string name="error_no_wi_fi_settings_activity">Unfortunately unable to launch "Wi-Fi settings"</string>
 
 </resources>
