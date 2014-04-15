@@ -26,6 +26,7 @@ import java.util.Set;
 public class Rpc {
 
     private static final String RPC_NETWORK = "RPC network";
+    private static final int SSDP_TIMEOUT = 1000;
 
     public interface ConnectionListener {
         void onConnected();
@@ -61,6 +62,7 @@ public class Rpc {
             initialized = false;
             initializationError = null;
             SsdpClient ssdpClient = new SsdpClient();
+            ssdpClient.setSearchTimeout(SSDP_TIMEOUT);
             String deviceDescriptionUrl = ssdpClient.getDeviceDescriptionUrl();
             DeviceDescription description = new DeviceDescription(deviceDescriptionUrl);
             String cameraServiceUrl = description.getServiceUrl(DeviceDescription.CAMERA);

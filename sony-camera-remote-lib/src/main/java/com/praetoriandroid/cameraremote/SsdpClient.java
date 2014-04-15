@@ -16,13 +16,15 @@ public class SsdpClient {
     private static final String WIFI_INTERFACE_NAME = "^w.*[0-9]$";
 
     private static final int PACKET_BUFFER_SIZE = 1024;
-    private static final int RECEIVE_TIMEOUT = 10000;
+    private static final int DEFAULT_RECEIVE_TIMEOUT = 10000;
     private static final int REPEAT_INTERVAL = 100;
 
     private static final int SSDP_PORT = 1900;
     private static final int SSDP_MX = 1;
     private static final String SSDP_ADDRESS = "239.255.255.250";
     private static final String SSDP_ST = "urn:schemas-sony-com:service:ScalarWebAPI:1";
+
+    private int timeout = DEFAULT_RECEIVE_TIMEOUT;
 
 //    public SsdpClient() {
 //        try {
@@ -55,6 +57,10 @@ public class SsdpClient {
 //            System.out.println(" (error retrieving network interface list)");
 //        }
 //    }
+
+    public void setSearchTimeout(int milliseconds) {
+        timeout = milliseconds;
+    }
 
     public String getDeviceDescriptionUrl() throws SsdpException {
         DatagramSocket socket = null;
@@ -97,7 +103,7 @@ public class SsdpClient {
     }
 
     private String processResponse(DatagramSocket socket) throws IOException, SsdpException {
-        socket.setSoTimeout(RECEIVE_TIMEOUT);
+        socket.setSoTimeout(timeout);
         byte[] buffer = new byte[PACKET_BUFFER_SIZE];
         DatagramPacket answer = new DatagramPacket(buffer, buffer.length);
         socket.receive(answer);
