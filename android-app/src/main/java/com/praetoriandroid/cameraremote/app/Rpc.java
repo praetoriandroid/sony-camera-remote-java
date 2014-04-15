@@ -181,31 +181,6 @@ public class Rpc {
         }
     }
 
-    void onLiveViewStarted(final String url, final LiveViewCallback callback) {
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    liveViewFetcher.connect(url);
-                    while (liveViewInProgress) {
-                        LiveViewFetcher.Frame frame = liveViewFetcher.getNextFrame();
-                        callback.onNextFrame(frame);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    callback.onError(e);
-                } catch (HttpClient.BadHttpResponseException e) {
-                    e.printStackTrace();
-                    callback.onError(e);
-                } catch (LiveViewFetcher.ParseException e) {
-                    e.printStackTrace();
-                    callback.onError(e);
-                } catch (LiveViewFetcher.DisconnectedException ignored) {
-                }
-            }
-        }.start();
-    }
-
     public void startLiveView(final LiveViewCallback callback) {
         liveViewInProgress = true;
         sendRequest(new StartLiveViewRequest(), liveViewFetcher, new ResponseHandler<StartLiveViewResponse>() {
@@ -233,6 +208,33 @@ public class Rpc {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void onLiveViewStarted(final String url, final LiveViewCallback callback) {
+        new Thread() {
+            @Override
+            public void run() {
+                try {
+                    liveViewFetcher.connect(url);
+                    while (liveViewInProgress) {
+                        LiveViewFetcher.Frame frame = liveViewFetcher.getNextFrame();
+                        callback.onNextFrame(frame);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    callback.onError(e);
+                } catch (HttpClient.BadHttpResponseException e) {
+                    e.printStackTrace();
+                    callback.onError(e);
+                } catch (LiveViewFetcher.ParseException e) {
+                    e.printStackTrace();
+                    callback.onError(e);
+                } catch (LiveViewFetcher.DisconnectedException e) {
+                    callback.onError(e);
+                    onConnectionFailed(e);
+                }
+            }
+        }.start();
     }
 
 }
