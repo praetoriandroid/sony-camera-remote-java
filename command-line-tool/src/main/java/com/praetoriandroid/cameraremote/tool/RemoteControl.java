@@ -1,7 +1,7 @@
 package com.praetoriandroid.cameraremote.tool;
 
 import com.praetoriandroid.cameraremote.DeviceDescription;
-import com.praetoriandroid.cameraremote.GetExposureModeRequest;
+import com.praetoriandroid.cameraremote.rpc.GetExposureModeRequest;
 import com.praetoriandroid.cameraremote.HttpClient;
 import com.praetoriandroid.cameraremote.Logger;
 import com.praetoriandroid.cameraremote.RpcClient;
