@@ -16,8 +16,8 @@ public class GetAvailableSelfTimerResponse extends BaseResponse<CustomizableEnti
                 throw new IllegalResponseException("First 'result' element should be integer");
             }
 
-            if (!(result[0] instanceof IntArrayEntity)) {
-                throw new IllegalResponseException("First 'result' element should be integer-array");
+            if (!(result[1] instanceof IntArrayEntity)) {
+                throw new IllegalResponseException("Second 'result' element should be integer-array");
             }
         }
     }
@@ -27,10 +27,10 @@ public class GetAvailableSelfTimerResponse extends BaseResponse<CustomizableEnti
     }
 
     public int[] getAvailableTimers() {
-        return ((IntArrayEntity) getResult()[0]).getValue();
+        return ((IntArrayEntity) getResult()[1]).getValue();
     }
 
-    public static class IntArrayEntity implements CustomizableEntity {
+    static class IntArrayEntity implements CustomizableEntity {
 
         private int[] value;
 
@@ -44,7 +44,7 @@ public class GetAvailableSelfTimerResponse extends BaseResponse<CustomizableEnti
 
     }
 
-    public static class IntEntity implements CustomizableEntity {
+    static class IntEntity implements CustomizableEntity {
 
         private int value;
 
