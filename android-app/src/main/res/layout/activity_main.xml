@@ -17,17 +17,20 @@
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:layout_margin="10dp"
+        android:layout_margin="@dimen/default_spacing"
         android:background="@drawable/shot_button"
         android:contentDescription="@string/cd_shot"
-        android:enabled="false" />
+        android:enabled="false"
+        tools:enabled="true" />
 
     <include
         android:id="@+id/progress"
+        tools:visibility="invisible"
         layout="@layout/full_screen_progress" />
 
     <include
         android:id="@+id/connection_error_dialog"
+        android:visibility="invisible"
         layout="@layout/connection_error_dialog" />
 
 </RelativeLayout>
