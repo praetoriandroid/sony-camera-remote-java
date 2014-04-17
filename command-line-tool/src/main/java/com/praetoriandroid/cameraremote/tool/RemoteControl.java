@@ -1,11 +1,14 @@
 package com.praetoriandroid.cameraremote.tool;
 
 import com.praetoriandroid.cameraremote.DeviceDescription;
-import com.praetoriandroid.cameraremote.rpc.GetExposureModeRequest;
 import com.praetoriandroid.cameraremote.HttpClient;
 import com.praetoriandroid.cameraremote.Logger;
+import com.praetoriandroid.cameraremote.ParseException;
 import com.praetoriandroid.cameraremote.RpcClient;
+import com.praetoriandroid.cameraremote.RpcException;
+import com.praetoriandroid.cameraremote.ServiceNotSupportedException;
 import com.praetoriandroid.cameraremote.SsdpClient;
+import com.praetoriandroid.cameraremote.SsdpException;
 import com.praetoriandroid.cameraremote.rpc.ActTakePictureRequest;
 import com.praetoriandroid.cameraremote.rpc.ActTakePictureResponse;
 import com.praetoriandroid.cameraremote.rpc.AwaitTakePictureRequest;
@@ -16,6 +19,7 @@ import com.praetoriandroid.cameraremote.rpc.GetAvailableApiListRequest;
 import com.praetoriandroid.cameraremote.rpc.GetAvailableApiListResponse;
 import com.praetoriandroid.cameraremote.rpc.GetEventRequest;
 import com.praetoriandroid.cameraremote.rpc.GetEventResponse;
+import com.praetoriandroid.cameraremote.rpc.GetExposureModeRequest;
 import com.praetoriandroid.cameraremote.rpc.GetMethodTypesRequest;
 import com.praetoriandroid.cameraremote.rpc.GetMethodTypesResponse;
 import com.praetoriandroid.cameraremote.rpc.GetVersionsRequest;
@@ -42,8 +46,7 @@ public class RemoteControl implements Logger {
 
     private String lastFetchUrl;
 
-    private RemoteControl()
-            throws IOException, DeviceDescription.ServiceNotSupportedException, SsdpClient.SsdpException {
+    private RemoteControl() throws IOException, RpcException {
         String cacheDir = System.getenv("HOME");
         if (cacheDir == null) {
             cacheDir = "/tmp";
@@ -65,9 +68,6 @@ public class RemoteControl implements Logger {
                     command.process(remoteControl, Arrays.copyOfRange(args, 1, args.length));
                 } catch (IllegalArgumentException e) {
                     System.exit(1);
-                } catch (HttpClient.BadHttpResponseException e) {
-                    System.err.println(e.toString());
-                    System.exit(1);
                 }
             } else {
                 remoteControl.goInteractive(remoteControl);
@@ -75,10 +75,7 @@ public class RemoteControl implements Logger {
         } catch (IOException e) {
             e.printStackTrace();
             System.exit(1);
-        } catch (SsdpClient.SsdpException e) {
-            e.printStackTrace();
-            System.exit(1);
-        } catch (DeviceDescription.ServiceNotSupportedException e) {
+        } catch (RpcException e) {
             e.printStackTrace();
             System.exit(1);
         }
@@ -112,7 +109,7 @@ public class RemoteControl implements Logger {
         }
     }
 
-    private void goInteractive(RemoteControl remoteControl) throws IOException {
+    private void goInteractive(RemoteControl remoteControl) throws IOException, RpcException {
         interactive = true;
         try {
             while (true) {
@@ -125,8 +122,6 @@ public class RemoteControl implements Logger {
                     }
                     commandInfo.command.process(remoteControl, commandInfo.args);
                 } catch (IllegalArgumentException ignored) {
-                } catch (HttpClient.BadHttpResponseException e) {
-                    System.err.println(e.toString());
                 }
             }
         } finally {
@@ -135,7 +130,7 @@ public class RemoteControl implements Logger {
     }
 
     private RpcClient createClient(Cache config)
-            throws IOException, DeviceDescription.ServiceNotSupportedException, SsdpClient.SsdpException {
+            throws IOException, RpcException {
         String cameraServiceUrl = config.get(KEY_CAMERA_SERVICE_URL);
         RpcClient rpcClient;
         boolean discovered = false;
@@ -148,13 +143,14 @@ public class RemoteControl implements Logger {
         try {
             rpcClient.sayHello();
 
-            List<String> supportedVersions = rpcClient.send(new GetVersionsRequest()).getSupportedVersions();
+            List<String> supportedVersions = rpcClient.send(new GetVersionsRequest())
+                    .getSupportedVersions();
             debug("Supported versions: %s", supportedVersions);
             if (!supportedVersions.contains("1.0")) {
                 System.err.println("API version 1.0 is not supported!");
                 System.exit(1);
             }
-        } catch (IOException e) {
+        } catch (RpcException e) {
             if (discovered) {
                 throw e;
             } else {
@@ -162,13 +158,12 @@ public class RemoteControl implements Logger {
                 rpcClient = new RpcClient(cameraServiceUrl);
                 rpcClient.sayHello();
             }
-        } catch (HttpClient.BadHttpResponseException e) {
-            throw new IOException(e);
         }
         return rpcClient;
     }
 
-    private String discoverCameraServiceUrl(Cache config) throws SsdpClient.SsdpException, IOException, DeviceDescription.ServiceNotSupportedException {
+    private String discoverCameraServiceUrl(Cache config)
+            throws SsdpException, IOException, ServiceNotSupportedException, ParseException {
         SsdpClient ssdpClient = new SsdpClient();
         String deviceDescriptionUrl = ssdpClient.getDeviceDescriptionUrl();
         DeviceDescription description = new DeviceDescription.Fetcher().fetch(deviceDescriptionUrl);
@@ -222,8 +217,7 @@ public class RemoteControl implements Logger {
     private static enum Command {
         help {
             @Override
-            void process(final RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(final RemoteControl remoteControl, String... args) throws RpcException {
                 help.printInfo(remoteControl);
                 hello.printInfo(remoteControl);
                 goodbye.printInfo(remoteControl);
@@ -250,7 +244,7 @@ public class RemoteControl implements Logger {
         },
         hello {
             @Override
-            void process(RemoteControl remoteControl, String... args) throws IOException {
+            void process(RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.rpcClient.sayHello();
             }
 
@@ -261,7 +255,7 @@ public class RemoteControl implements Logger {
         },
         goodbye {
             @Override
-            void process(RemoteControl remoteControl, String... args) throws IOException {
+            void process(RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.rpcClient.sayGoodbye();
             }
 
@@ -273,7 +267,7 @@ public class RemoteControl implements Logger {
         fetch {
             @Override
             void process(RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+                    throws RpcException, IOException {
                 String url = remoteControl.getLastFetchUrl();
                 if (url != null) {
                     String output = url.replaceFirst(".*/", "");
@@ -292,7 +286,7 @@ public class RemoteControl implements Logger {
         },
         exit {
             @Override
-            void process(RemoteControl remoteControl, String... args) throws IOException {
+            void process(RemoteControl remoteControl, String... args) throws RpcException {
                 System.exit(0);
             }
 
@@ -303,8 +297,7 @@ public class RemoteControl implements Logger {
         },
         actTakePicture {
             @Override
-            void process(final RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(final RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.sendCommand(new ActTakePictureRequest(), new SuccessfulResponseHandler<ActTakePictureResponse>() {
                     @Override
                     public void onSuccess(ActTakePictureResponse response) {
@@ -320,8 +313,7 @@ public class RemoteControl implements Logger {
         },
         awaitTakePicture {
             @Override
-            void process(final RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(final RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.sendCommand(new AwaitTakePictureRequest(),
                         new SuccessfulResponseHandler<ActTakePictureResponse>() {
                             @Override
@@ -339,8 +331,7 @@ public class RemoteControl implements Logger {
         },
         startLiveview {
             @Override
-            void process(final RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(final RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.sendCommand(new StartLiveViewRequest(), new SuccessfulResponseHandler<StartLiveViewResponse>() {
                     @Override
                     public void onSuccess(StartLiveViewResponse response) {
@@ -351,15 +342,13 @@ public class RemoteControl implements Logger {
         },
         stopLiveview {
             @Override
-            void process(RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.sendCommand(new StopLiveviewRequest());
             }
         },
         getEvent {
             @Override
-            void process(final RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(final RemoteControl remoteControl, String... args) throws RpcException {
                 boolean longPolling = false;
                 if (args.length > 0) {
                     longPolling = Boolean.parseBoolean(args[0]);
@@ -385,8 +374,7 @@ public class RemoteControl implements Logger {
         },
         getMethodTypes {
             @Override
-            void process(final RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(final RemoteControl remoteControl, String... args) throws RpcException {
                 String version = args.length > 0 ? args[0] : "";
                 remoteControl.sendCommand(new GetMethodTypesRequest(version), new SuccessfulResponseHandler<GetMethodTypesResponse>() {
                     @Override
@@ -403,13 +391,13 @@ public class RemoteControl implements Logger {
         },
         getExposureMode {
             @Override
-            void process(RemoteControl remoteControl, String... args)
-                    throws IOException, HttpClient.BadHttpResponseException {
+            void process(RemoteControl remoteControl, String... args) throws RpcException {
                 remoteControl.sendCommand(new GetExposureModeRequest());
             }
         };
 
-        abstract void process(RemoteControl remoteControl, String... args) throws IOException, HttpClient.BadHttpResponseException;
+        abstract void process(RemoteControl remoteControl, String... args)
+                throws IOException, RpcException;
 
         String getInfo() {
             return "... (see Documentation)";
@@ -450,14 +438,14 @@ public class RemoteControl implements Logger {
         void onSuccess(Response response);
     }
 
-    private <Response extends BaseResponse<?>> void sendCommand(BaseRequest<?, Response> request)
-            throws IOException, HttpClient.BadHttpResponseException {
+    private <Response extends BaseResponse<?>>
+    void sendCommand(BaseRequest<?, Response> request) throws RpcException {
         sendCommand(request, null);
     }
 
-    private <Response extends BaseResponse<?>> void sendCommand(BaseRequest<?, Response> request,
-                                                               SuccessfulResponseHandler<Response> responseHandler)
-            throws IOException, HttpClient.BadHttpResponseException {
+    private <Response extends BaseResponse<?>>
+    void sendCommand(BaseRequest<?, Response> request, SuccessfulResponseHandler<Response> responseHandler)
+            throws RpcException {
         Response response = rpcClient.send(request);
         if (response.isOk()) {
             if (responseHandler != null) {

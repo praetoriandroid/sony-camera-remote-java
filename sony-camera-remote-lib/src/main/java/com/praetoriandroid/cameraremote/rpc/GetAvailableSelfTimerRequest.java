@@ -8,6 +8,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import com.google.gson.JsonSyntaxException;
 
 import java.lang.reflect.Type;
 
@@ -20,7 +21,8 @@ public class GetAvailableSelfTimerRequest extends BaseRequest<Void, GetAvailable
     }
 
     @Override
-    public GetAvailableSelfTimerResponse parseResponse(Gson gson, String data) {
+    public GetAvailableSelfTimerResponse parseResponse(Gson gson, String data)
+            throws JsonSyntaxException {
         synchronized (GetAvailableSelfTimerRequest.class) {
             if (customGson == null) {
                 customGson = getGson();

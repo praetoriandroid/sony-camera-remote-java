@@ -7,6 +7,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 
 import java.lang.reflect.Type;
 
@@ -19,7 +20,7 @@ public class GetEventRequest extends BaseRequest<Boolean, GetEventResponse> {
     }
 
     @Override
-    public GetEventResponse parseResponse(Gson gson, String data) {
+    public GetEventResponse parseResponse(Gson gson, String data) throws JsonSyntaxException {
         synchronized (GetEventRequest.class) {
             if (customGson == null) {
                 customGson = createGson();

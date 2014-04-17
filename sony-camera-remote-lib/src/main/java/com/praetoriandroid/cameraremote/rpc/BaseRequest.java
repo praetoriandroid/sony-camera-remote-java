@@ -1,6 +1,7 @@
 package com.praetoriandroid.cameraremote.rpc;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 
 import java.util.Arrays;
 
@@ -40,7 +41,7 @@ public abstract class BaseRequest<Param, Response extends BaseResponse> {
         id = getNextId();
     }
 
-    public Response parseResponse(Gson gson, String data) {
+    public Response parseResponse(Gson gson, String data) throws JsonSyntaxException {
         return gson.fromJson(data, responseClass);
     }
 

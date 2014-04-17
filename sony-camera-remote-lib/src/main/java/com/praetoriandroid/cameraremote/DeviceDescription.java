@@ -25,15 +25,13 @@ public class DeviceDescription {
 
         private HttpClient httpClient = new HttpClient();
 
-        public DeviceDescription fetch(String url) throws IOException {
+        public DeviceDescription fetch(String url) throws IOException, ParseException {
             InputStream dataStream = null;
             try {
                 dataStream = httpClient.get(url);
                 Map<String, String> services = parse(dataStream);
                 dataStream.close();
                 return new DeviceDescription(services);
-            } catch (HttpClient.BadHttpResponseException e) {
-                throw new IOException(e);
             } finally {
                 if (dataStream != null) {
                     dataStream.close();
@@ -46,7 +44,7 @@ public class DeviceDescription {
             return this;
         }
 
-        private Map<String, String> parse(InputStream dataStream) throws ParseException {
+        private Map<String, String> parse(InputStream dataStream) throws IOException, ParseException {
             try {
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 DocumentBuilder builder = factory.newDocumentBuilder();
@@ -73,8 +71,6 @@ public class DeviceDescription {
                 throw new ParseException(e);
             } catch (SAXException e) {
                 throw new InvalidDataFormatException(e);
-            } catch (IOException e) {
-                throw new ParseException(e);
             }
         }
 
@@ -136,7 +132,7 @@ public class DeviceDescription {
     public String getServiceUrl(String serviceType) throws ServiceNotSupportedException {
         String url = services.get(serviceType);
         if (url == null) {
-            throw new ServiceNotSupportedException();
+            throw new ServiceNotSupportedException(serviceType);
         }
         return url + '/' + serviceType;
     }
@@ -144,29 +140,6 @@ public class DeviceDescription {
     @Override
     public String toString() {
         return services.toString();
-    }
-
-    public static class ParseException extends IOException {
-        public ParseException(String message) {
-            super(message);
-        }
-
-        public ParseException(Throwable e) {
-            super(e);
-        }
-    }
-
-    private static class InvalidDataFormatException extends ParseException {
-        public InvalidDataFormatException(String message) {
-            super(message);
-        }
-
-        public InvalidDataFormatException(Throwable e) {
-            super(e);
-        }
-    }
-
-    public static class ServiceNotSupportedException extends Exception {
     }
 
 }

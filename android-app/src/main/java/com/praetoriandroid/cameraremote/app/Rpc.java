@@ -3,9 +3,11 @@ package com.praetoriandroid.cameraremote.app;
 import android.util.Log;
 
 import com.praetoriandroid.cameraremote.DeviceDescription;
-import com.praetoriandroid.cameraremote.HttpClient;
+import com.praetoriandroid.cameraremote.LiveViewDisconnectedException;
 import com.praetoriandroid.cameraremote.LiveViewFetcher;
+import com.praetoriandroid.cameraremote.ParseException;
 import com.praetoriandroid.cameraremote.RpcClient;
+import com.praetoriandroid.cameraremote.RpcException;
 import com.praetoriandroid.cameraremote.SsdpClient;
 import com.praetoriandroid.cameraremote.rpc.BaseRequest;
 import com.praetoriandroid.cameraremote.rpc.BaseResponse;
@@ -74,11 +76,9 @@ public class Rpc {
             rpcClient.setConnectionTimeout(CONNECTION_TIMEOUT);
             rpcClient.sayHello();
             onConnected(cameraServiceUrl);
-        } catch (SsdpClient.SsdpException e) {
-            onConnectionFailed(e);
-        } catch (DeviceDescription.ServiceNotSupportedException e) {
-            onConnectionFailed(e);
         } catch (IOException e) {
+            onConnectionFailed(e);
+        } catch (RpcException e) {
             onConnectionFailed(e);
         }
     }
@@ -154,9 +154,7 @@ public class Rpc {
             } else {
                 onErrorResponse(tag, response.getErrorCode());
             }
-        } catch (HttpClient.BadHttpResponseException e) {
-            onResponseFail(tag, e);
-        } catch (IOException e) {
+        } catch (RpcException e) {
             onResponseFail(tag, e);
         }
     }
@@ -228,17 +226,10 @@ public class Rpc {
                         callback.onNextFrame(frame);
                     }
                 } catch (IOException e) {
-                    e.printStackTrace();
                     callback.onError(e);
-                } catch (HttpClient.BadHttpResponseException e) {
-                    e.printStackTrace();
+                } catch (ParseException e) {
                     callback.onError(e);
-                } catch (LiveViewFetcher.ParseException e) {
-                    e.printStackTrace();
-                    callback.onError(e);
-                } catch (LiveViewFetcher.DisconnectedException e) {
-                    callback.onError(e);
-                    onConnectionFailed(e);
+                } catch (LiveViewDisconnectedException ignored) {
                 }
             }
         }.start();

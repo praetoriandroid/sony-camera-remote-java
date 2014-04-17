@@ -3,7 +3,7 @@ package com.praetoriandroid.cameraremote.rpc;
 public class GetAvailableSelfTimerResponse extends BaseResponse<CustomizableEntity> {
 
     @Override
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         super.validate();
 
         if (isOk()) {
@@ -13,11 +13,11 @@ public class GetAvailableSelfTimerResponse extends BaseResponse<CustomizableEnti
             }
 
             if (!(result[0] instanceof IntEntity)) {
-                throw new IllegalResponseException("First 'result' element should be integer");
+                throw new ValidationException("First 'result' element should be integer");
             }
 
             if (!(result[1] instanceof IntArrayEntity)) {
-                throw new IllegalResponseException("Second 'result' element should be integer-array");
+                throw new ValidationException("Second 'result' element should be integer-array");
             }
         }
     }

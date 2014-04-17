@@ -7,7 +7,7 @@ package com.praetoriandroid.cameraremote.rpc;
 public class SimpleResponse extends BaseResponse<Integer> {
 
     @Override
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         super.validate();
 
         if (isOk()) {

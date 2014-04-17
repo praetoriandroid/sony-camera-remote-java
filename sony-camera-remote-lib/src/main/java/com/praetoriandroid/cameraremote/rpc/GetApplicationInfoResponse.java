@@ -3,7 +3,7 @@ package com.praetoriandroid.cameraremote.rpc;
 public class GetApplicationInfoResponse extends BaseResponse<String> {
 
     @Override
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         super.validate();
 
         if (isOk()) {

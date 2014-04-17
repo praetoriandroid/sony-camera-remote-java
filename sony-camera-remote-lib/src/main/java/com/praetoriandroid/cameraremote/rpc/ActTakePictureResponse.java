@@ -2,7 +2,7 @@ package com.praetoriandroid.cameraremote.rpc;
 
 public class ActTakePictureResponse extends BaseResponse<String[]> {
     @Override
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         super.validate();
         String[][] result = getResult();
         if (isOk()) {

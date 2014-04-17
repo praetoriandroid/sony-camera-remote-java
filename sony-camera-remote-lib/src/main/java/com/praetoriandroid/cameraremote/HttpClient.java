@@ -29,15 +29,15 @@ public class HttpClient {
         return connectionTimeout;
     }
 
-    public InputStream get(String urlString) throws IOException, BadHttpResponseException {
+    public InputStream get(String urlString) throws IOException {
         return fetch(urlString, Method.GET, null);
     }
 
-    public InputStream post(String urlString, String data) throws IOException, BadHttpResponseException {
+    public InputStream post(String urlString, String data) throws IOException {
         return fetch(urlString, Method.POST, data);
     }
 
-    private InputStream fetch(String urlString, Method method, String postData) throws IOException, BadHttpResponseException {
+    private InputStream fetch(String urlString, Method method, String postData) throws IOException {
         if (postData != null && method != Method.POST) {
             throw new IllegalArgumentException();
         }
@@ -66,13 +66,13 @@ public class HttpClient {
 
         int responseCode = connection.getResponseCode();
         if (responseCode != HttpURLConnection.HTTP_OK) {
-            throw new BadHttpResponseException(connection.getResponseCode(), connection.getResponseMessage());
+            throw new BadHttpStatusException(connection.getResponseCode(), connection.getResponseMessage());
         }
 
         return connection.getInputStream();
     }
 
-    public String fetchTextByPost(String url, String postData) throws IOException, BadHttpResponseException {
+    public String fetchTextByPost(String url, String postData) throws IOException {
         InputStream inputStream = null;
         try {
             inputStream = post(url, postData);
@@ -84,7 +84,7 @@ public class HttpClient {
         }
     }
 
-    public void getFile(String url, String outputPath) throws IOException, BadHttpResponseException {
+    public void getFile(String url, String outputPath) throws IOException {
         InputStream inputStream = null;
         OutputStream outputStream = null;
         try {
@@ -134,21 +134,4 @@ public class HttpClient {
         }
     }
 
-    public static class BadHttpResponseException extends Exception {
-
-        private int code;
-
-        private String message;
-
-        public BadHttpResponseException(int code, String message) {
-            super(code + ": " + message);
-            this.code = code;
-            this.message = message;
-        }
-
-        @Override
-        public String toString() {
-            return getMessage();
-        }
-    }
 }

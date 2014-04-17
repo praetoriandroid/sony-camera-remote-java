@@ -5,7 +5,7 @@ import java.util.List;
 public class GetAvailableApiListResponse extends BaseResponse<List<String>> {
 
     @Override
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         super.validate();
 
         if (isOk()) {

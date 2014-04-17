@@ -166,7 +166,7 @@ public class LiveViewFetcher {
         httpClient.setConnectionTimeout(timeout);
     }
 
-    public void connect(String url) throws IOException, HttpClient.BadHttpResponseException {
+    public void connect(String url) throws IOException {
         closed = false;
         inputStream = httpClient.get(url);
     }
@@ -178,7 +178,7 @@ public class LiveViewFetcher {
         }
     }
 
-    public Frame getNextFrame() throws IOException, ParseException, DisconnectedException {
+    public Frame getNextFrame() throws IOException, ParseException, LiveViewDisconnectedException {
         try {
             commonHeader.read(inputStream);
             payloadHeader.read(inputStream);
@@ -193,7 +193,7 @@ public class LiveViewFetcher {
             return reusableFrame;
         } catch (IOException e) {
             if (closed) {
-                throw new DisconnectedException();
+                throw new LiveViewDisconnectedException();
             } else {
                 throw e;
             }
@@ -202,15 +202,6 @@ public class LiveViewFetcher {
 
     public void writeNextFrame(OutputStream outputStream) throws IOException {
         payloadData.write(outputStream);
-    }
-
-    public static class ParseException extends Exception {
-        public ParseException(String message) {
-            super(message);
-        }
-    }
-
-    public static class DisconnectedException extends Exception {
     }
 
 }

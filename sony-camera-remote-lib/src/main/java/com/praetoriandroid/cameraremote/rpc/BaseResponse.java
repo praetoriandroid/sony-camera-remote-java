@@ -38,29 +38,29 @@ public abstract class BaseResponse<Result> {
 
     private int id;
 
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         if (result != null && results != null) {
-            throw new IllegalResponseException("Both 'result' and 'results' are not allowed");
+            throw new ValidationException("Both 'result' and 'results' are not allowed");
         }
 
         if (getResult() != null && error != null) {
-            throw new IllegalResponseException("Both 'result[s]' and 'error' are not allowed");
+            throw new ValidationException("Both 'result[s]' and 'error' are not allowed");
         }
 
         if (getResult() == null && error == null) {
-            throw new IllegalResponseException("Both 'result[s]' and 'error' could not be null");
+            throw new ValidationException("Both 'result[s]' and 'error' could not be null");
         }
 
         if (error != null) {
             if (error.length != 2) {
-                throw new IllegalResponseException("'error' contains " + error.length + " (must be 2)");
+                throw new IllegalResultSizeException(2, error.length);
             }
 
             try {
                 //noinspection ResultOfMethodCallIgnored
                 Integer.parseInt(error[0]);
             } catch (NumberFormatException e) {
-                throw new IllegalResponseException("Illegal error code value: " + error[0]);
+                throw new ValidationException("Illegal error code value: " + error[0]);
             }
         }
     }
@@ -100,34 +100,4 @@ public abstract class BaseResponse<Result> {
         return Arrays.toString(getResult()) + '/' + Arrays.toString(error) + '[' + id + ']';
     }
 
-    public static class IllegalResponseException extends Exception {
-
-        public IllegalResponseException(String message) {
-            super(message);
-        }
-
-    }
-
-    public static class IllegalResultSizeException extends IllegalResponseException {
-
-        public IllegalResultSizeException(int expectedSize, int actualSize) {
-            super("Illegal 'result' size (must be " + expectedSize + "): " + actualSize);
-        }
-
-    }
-
-    public static class ResponseParseException extends RuntimeException {
-
-        public ResponseParseException() {
-            super();
-        }
-
-        public ResponseParseException(String message) {
-            super(message);
-        }
-
-        public ResponseParseException(Throwable cause) {
-            super(cause);
-        }
-    }
 }

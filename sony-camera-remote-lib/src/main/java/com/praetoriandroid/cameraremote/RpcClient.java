@@ -1,6 +1,7 @@
 package com.praetoriandroid.cameraremote;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.praetoriandroid.cameraremote.rpc.BaseRequest;
 import com.praetoriandroid.cameraremote.rpc.BaseResponse;
 import com.praetoriandroid.cameraremote.rpc.GetApplicationInfoRequest;
@@ -36,53 +37,46 @@ public class RpcClient {
         this.logger = logger;
     }
 
-    public void sayHello() throws IOException {
-        try {
-            GetApplicationInfoResponse appInfo = send(new GetApplicationInfoRequest());
-            if (!appInfo.isVersionOk()) {
-                throw new IOException("Illegal camera API version (must be at least 2.0.0): " + appInfo.getVersion());
-            }
+    public void sayHello() throws RpcException {
+        GetApplicationInfoResponse appInfo = send(new GetApplicationInfoRequest());
+        if (!appInfo.isVersionOk()) {
+            throw new RpcException("Illegal camera API version (must be at least 2.0.0): "
+                    + appInfo.getVersion());
+        }
 
-            GetAvailableApiListResponse availableApiList = send(new GetAvailableApiListRequest());
-            if (availableApiList.getApiList().contains(RpcMethod.startRecMode.name())) {
-                SimpleResponse recModeResult = send(new StartRecModeRequest());
-                if (!recModeResult.isOk()) {
-                    throw new IOException("Could not start rec mode: " + recModeResult.getErrorCode());
-                }
+        GetAvailableApiListResponse availableApiList = send(new GetAvailableApiListRequest());
+        if (availableApiList.getApiList().contains(RpcMethod.startRecMode.name())) {
+            SimpleResponse recModeResult = send(new StartRecModeRequest());
+            if (!recModeResult.isOk()) {
+                throw new RpcException("Could not start rec mode: " + recModeResult.getErrorCode());
             }
-        } catch (HttpClient.BadHttpResponseException e) {
-            throw new IOException(e);
         }
     }
 
-    public void sayGoodbye() throws IOException {
-        try {
-            GetAvailableApiListResponse availableApiList = send(new GetAvailableApiListRequest());
-            if (availableApiList.getApiList().contains(RpcMethod.stopRecMode.name())) {
-                SimpleResponse recModeResult = send(new StopRecModeRequest());
-                if (!recModeResult.isOk()) {
-                    throw new IOException("Could not stop rec mode: " + recModeResult.getErrorCode());
-                }
+    public void sayGoodbye() throws RpcException {
+        GetAvailableApiListResponse availableApiList = send(new GetAvailableApiListRequest());
+        if (availableApiList.getApiList().contains(RpcMethod.stopRecMode.name())) {
+            SimpleResponse recModeResult = send(new StopRecModeRequest());
+            if (!recModeResult.isOk()) {
+                throw new RpcException("Could not stop rec mode: " + recModeResult.getErrorCode());
             }
-        } catch (HttpClient.BadHttpResponseException e) {
-            throw new IOException(e);
         }
     }
 
-    public <Response extends BaseResponse<?>> Response send(BaseRequest<?, Response> request)
-            throws IOException, HttpClient.BadHttpResponseException {
-        String requestText = gson.toJson(request);
-        debug("Request: %s", requestText);
-        String responseText = httpClient.fetchTextByPost(cameraServiceUrl, requestText);
-        debug("Response: %s", responseText);
+    public <Response extends BaseResponse<?>>
+    Response send(BaseRequest<?, Response> request) throws RpcException {
         try {
+            String requestText = gson.toJson(request);
+            debug("Request: %s", requestText);
+            String responseText = httpClient.fetchTextByPost(cameraServiceUrl, requestText);
+            debug("Response: %s", responseText);
             Response response = request.parseResponse(gson, responseText);
             response.validate();
             return response;
-        } catch (BaseResponse.IllegalResponseException e) {
-            throw new IOException(e);
-        } catch (RuntimeException e) {
-            throw new IOException(e);
+        } catch (JsonSyntaxException e) {
+            throw new RpcException(e);
+        } catch (IOException e) {
+            throw new RpcException(e);
         }
     }
 
@@ -91,4 +85,5 @@ public class RpcClient {
             logger.debug(format, args);
         }
     }
+
 }

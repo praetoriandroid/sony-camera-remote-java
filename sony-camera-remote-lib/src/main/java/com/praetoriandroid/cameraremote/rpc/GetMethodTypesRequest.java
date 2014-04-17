@@ -7,6 +7,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonSyntaxException;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class GetMethodTypesRequest extends BaseRequest<String, GetMethodTypesRes
     }
 
     @Override
-    public GetMethodTypesResponse parseResponse(Gson gson, String data) {
+    public GetMethodTypesResponse parseResponse(Gson gson, String data) throws JsonSyntaxException {
         synchronized (GetMethodTypesRequest.class) {
             if (customGson == null) {
                 customGson = createGson();

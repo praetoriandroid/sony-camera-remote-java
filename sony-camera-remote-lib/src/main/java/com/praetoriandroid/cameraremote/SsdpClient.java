@@ -1,6 +1,7 @@
 package com.praetoriandroid.cameraremote;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.Inet4Address;
@@ -69,14 +70,9 @@ public class SsdpClient {
             socket = new DatagramSocket(localAddress);
             sendMSearchRequest(socket);
             return processResponse(socket);
-        } catch (SocketException e) {
-            throw new SsdpException(e);
         } catch (IOException e) {
             throw new SsdpException(e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new SsdpException(e);
-        } catch (AddressNotFound e) {
+        } catch (ParseException e) {
             throw new SsdpException(e);
         } finally {
             if (socket != null) {
@@ -85,7 +81,7 @@ public class SsdpClient {
         }
     }
 
-    private void sendMSearchRequest(DatagramSocket socket) throws IOException, InterruptedException {
+    private void sendMSearchRequest(DatagramSocket socket) throws IOException {
         String ssdpRequest = "M-SEARCH * HTTP/1.1\r\n"
                 + String.format("HOST: %s:%d\r\n", SSDP_ADDRESS, SSDP_PORT)
                 + String.format("MAN: \"ssdp:discover\"\r\n")
@@ -96,13 +92,19 @@ public class SsdpClient {
         InetSocketAddress remoteAddress = new InetSocketAddress(SSDP_ADDRESS, SSDP_PORT);
         DatagramPacket request = new DatagramPacket(sendData, sendData.length, remoteAddress);
         socket.send(request);
-        Thread.sleep(REPEAT_INTERVAL);
-        socket.send(request);
-        Thread.sleep(REPEAT_INTERVAL);
-        socket.send(request);
+        try {
+            Thread.sleep(REPEAT_INTERVAL);
+            socket.send(request);
+            Thread.sleep(REPEAT_INTERVAL);
+            socket.send(request);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new InterruptedIOException();
+        }
     }
 
-    private String processResponse(DatagramSocket socket) throws IOException, SsdpException {
+    private String processResponse(DatagramSocket socket)
+            throws IOException, InvalidDataFormatException {
         socket.setSoTimeout(timeout);
         byte[] buffer = new byte[PACKET_BUFFER_SIZE];
         DatagramPacket answer = new DatagramPacket(buffer, buffer.length);
@@ -115,23 +117,24 @@ public class SsdpClient {
         return findHeaderValue(ssdpReplyMessage, "LOCATION");
     }
 
-    private String findHeaderValue(String ssdpMessage, String parameterName) throws HeaderNotFoundException {
+    private String findHeaderValue(String ssdpMessage, String parameterName)
+            throws InvalidDataFormatException {
         parameterName += ':';
         int start = ssdpMessage.indexOf(parameterName);
         if (start == -1) {
-            throw new HeaderNotFoundException();
+            throw new InvalidDataFormatException("Header not found: " + parameterName);
         }
         start += parameterName.length();
 
         int end = ssdpMessage.indexOf("\r\n", start);
         if (end == -1) {
-            throw new IllegalArgumentException("Every header should end with '\\r\\n'");
+            throw new InvalidDataFormatException("Every header should end with '\\r\\n'");
         }
 
         return ssdpMessage.substring(start, end).trim();
     }
 
-    private InetAddress getFirstWiFiAddress() throws AddressNotFound {
+    private InetAddress getFirstWiFiAddress() throws AddressNotFoundException {
         try {
             Enumeration<NetworkInterface> interfaces;
             for (interfaces = NetworkInterface.getNetworkInterfaces(); interfaces.hasMoreElements(); ) {
@@ -154,26 +157,10 @@ public class SsdpClient {
         } catch (SocketException ignored) {
         }
 
-        throw new AddressNotFound();
+        throw new AddressNotFoundException();
     }
 
-    public static class SsdpException extends Exception {
-        public SsdpException() {
-            super();
-        }
-
-        public SsdpException(Throwable e) {
-            super(e);
-        }
-    }
-
-    public static class AddressNotFound extends SsdpException {
-    }
-
-    public static class HeaderNotFoundException extends SsdpException {
-        public HeaderNotFoundException() {
-            super();
-        }
+    public static class AddressNotFoundException extends SsdpException {
     }
 
 }

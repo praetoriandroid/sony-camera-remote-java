@@ -5,7 +5,7 @@ import java.util.List;
 public class GetSupportedSelfTimerResponse extends BaseResponse<List<Integer>> {
 
     @Override
-    public void validate() throws IllegalResponseException {
+    public void validate() throws ValidationException {
         super.validate();
 
         if (isOk()) {
