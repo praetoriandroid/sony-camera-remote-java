@@ -1,0 +1,8 @@
+- Wrong regex for finding wi-fi interface (not applicable for MacOS X). Possibly need to remove it
+  at all and don't bind socket to a specific interface. (See git stash)
+  In this case wee will need some kind of handling for multiple SSDP-compliant devices in one network.
+- Skip frames if do not have time to decode them all.
+- Requests/responses for the rest RpcMethod constants.
+- All necessary controls in the android app.
+- Configurable serial shooting in the android app (count of shoots, interval, ???).
+- Support for the lower minimal Android version in the app.

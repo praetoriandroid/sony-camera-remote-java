@@ -1,9 +1,30 @@
 Sony Camera Remote API library and tools.
+Copyright 2014 Victor Demchenko [praetorian droid].
 
+Project modules:
+---------------
 sony-camera-remote-lib: Java implementation for Sony Camera Remote API.
 
-command-line-tool: Java command line tool that uses the library. For testing/
-debug porposes. Also you can use it to interact with the camera from your PC.
+command-line-tool: Java command line tool that uses the above library. For
+testing/debug porposes. Also you can use it to interact with the camera from
+your PC (scripts, etc).
 
 android-app: Android 'Sony Camera Remote Control' application that also uses
 the library.
+
+praetorian-widgets-lib: Some additional Android widgets, used in android-app.
+
+Versioning:
+----------
+See http://semver.org/
+
+Git:
+---
+All subsequent development must be collected in 'develop' branch. Feature
+branches (if any) should be merged into the 'develop' with --no-ff. 'develop'
+branch should be merged into the 'master' for making a release with --no-ff.
+Every merge into the 'master' must be accompanied by some incrementing.
+
+License:
+-------
+See LICENSE file.
