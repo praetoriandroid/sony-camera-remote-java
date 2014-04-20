@@ -72,12 +72,6 @@ public class MainActivity extends Activity implements Rpc.ConnectionListener {
             }
 
             @Override
-            public void onErrorResponse(int errorCode) {
-                Log.e("@@@@@", "Shot failed: " + errorCode);
-                shot.setEnabled(true);
-            }
-
-            @Override
             public void onFail(Throwable e) {
                 Log.e("@@@@@", "Shot failed", e);
                 shot.setEnabled(true);

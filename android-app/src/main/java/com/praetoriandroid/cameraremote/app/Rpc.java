@@ -38,7 +38,6 @@ public class Rpc {
 
     public interface ResponseHandler<Response extends BaseResponse<?>> {
         void onSuccess(Response response);
-        void onErrorResponse(int errorCode);
         void onFail(Throwable e);
     }
 
@@ -152,7 +151,7 @@ public class Rpc {
             if (response.isOk()) {
                 onResponseSuccess(tag, response);
             } else {
-                onErrorResponse(tag, response.getErrorCode());
+                throw new ErrorResponseException(response.getErrorCode());
             }
         } catch (RpcException e) {
             onResponseFail(tag, e);
@@ -165,15 +164,6 @@ public class Rpc {
         ResponseHandler<Response> handler = (ResponseHandler<Response>) responseHandlers.get(tag);
         if (handler != null) {
             handler.onSuccess(response);
-        }
-    }
-
-    @UiThread
-    <Response extends BaseResponse<?>> void onErrorResponse(Object tag, int errorCode) {
-        @SuppressWarnings("unchecked")
-        ResponseHandler<Response> handler = (ResponseHandler<Response>) responseHandlers.get(tag);
-        if (handler != null) {
-            handler.onErrorResponse(errorCode);
         }
     }
 
@@ -192,11 +182,6 @@ public class Rpc {
             @Override
             public void onSuccess(StartLiveViewResponse response) {
                 onLiveViewStarted(response.getUrl(), callback);
-            }
-
-            @Override
-            public void onErrorResponse(int errorCode) {
-                callback.onError(new IllegalStateException("HTTP error: " + errorCode));
             }
 
             @Override
@@ -235,4 +220,15 @@ public class Rpc {
         }.start();
     }
 
+    private static class ErrorResponseException extends RpcException {
+        private int errorCode;
+
+        public ErrorResponseException(int errorCode) {
+            this.errorCode = errorCode;
+        }
+
+        public int getErrorCode() {
+            return errorCode;
+        }
+    }
 }
