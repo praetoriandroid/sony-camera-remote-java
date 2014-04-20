@@ -10,5 +10,7 @@
     <string name="wi_fi_settings">Wi-Fi settings</string>
     <string name="reconnect">Reconnect</string>
     <string name="error_no_wi_fi_settings_activity">Unfortunately unable to launch "Wi-Fi settings"</string>
+    <string name="cd_self_timer">self timer</string>
+    <string name="cd_zoom">zoom</string>
 
 </resources>

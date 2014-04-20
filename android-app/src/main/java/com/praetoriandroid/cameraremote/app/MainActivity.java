@@ -15,6 +15,9 @@ import android.widget.Toast;
 import com.praetoriandroid.cameraremote.LiveViewFetcher;
 import com.praetoriandroid.cameraremote.rpc.ActTakePictureRequest;
 import com.praetoriandroid.cameraremote.rpc.ActTakePictureResponse;
+import com.praetoriandroid.cameraremote.rpc.SetSelfTimerRequest;
+import com.praetoriandroid.cameraremote.rpc.SimpleResponse;
+import com.praetoriandroid.widget.RadialSelector;
 
 import org.androidannotations.annotations.AfterViews;
 import org.androidannotations.annotations.Bean;
@@ -25,28 +28,24 @@ import org.androidannotations.annotations.ViewById;
 
 @EActivity(R.layout.activity_main)
 public class MainActivity extends Activity implements Rpc.ConnectionListener {
+    @Bean Rpc rpc;
 
-    @ViewById
-    LiveView liveView;
-
-    @ViewById
-    Button shot;
-
-    @ViewById
-    View progress;
-
-    @ViewById
-    View connectionErrorDialog;
-
-    @ViewById
-    TextView progressLabel;
-
-    @Bean
-    Rpc rpc;
+    @ViewById LiveView liveView;
+    @ViewById Button shot;
+    @ViewById View progress;
+    @ViewById View connectionErrorDialog;
+    @ViewById TextView progressLabel;
+    @ViewById SelfTimerSelector selfTimer;
 
     @AfterViews
     void init() {
         progressLabel.setText(R.string.connection_label);
+        selfTimer.setOnValueSelectedListener(new RadialSelector.OnValueSelectedListener<Integer>() {
+            @Override
+            public void onValueSelected(final Integer timer) {
+                onSelfTimerSelected(timer);
+            }
+        });
     }
 
     @Override
@@ -150,6 +149,27 @@ public class MainActivity extends Activity implements Rpc.ConnectionListener {
     @UiThread (propagation = UiThread.Propagation.REUSE)
     void dismissConnectionErrorDialog() {
         connectionErrorDialog.setVisibility(View.INVISIBLE);
+    }
+
+    @Click
+    void zoomClicked() {
+        Toast.makeText(this, "zoom", Toast.LENGTH_SHORT).show();
+    }
+
+    private void onSelfTimerSelected(final int timerValue) {
+        rpc.sendRequest(new SetSelfTimerRequest(timerValue), selfTimer, new Rpc.ResponseHandler<SimpleResponse>() {
+            @Override
+            public void onSuccess(SimpleResponse response) {
+                Toast.makeText(MainActivity.this, "Self timer was set to " + timerValue,
+                        Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onFail(Throwable e) {
+                Toast.makeText(MainActivity.this, "Failed to set self timer", Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
     }
 
 }

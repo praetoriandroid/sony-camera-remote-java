@@ -2,6 +2,7 @@ package com.praetoriandroid.cameraremote.app;
 
 import android.util.Log;
 
+import com.google.common.primitives.Ints;
 import com.praetoriandroid.cameraremote.DeviceDescription;
 import com.praetoriandroid.cameraremote.LiveViewDisconnectedException;
 import com.praetoriandroid.cameraremote.LiveViewFetcher;
@@ -11,6 +12,8 @@ import com.praetoriandroid.cameraremote.RpcException;
 import com.praetoriandroid.cameraremote.SsdpClient;
 import com.praetoriandroid.cameraremote.rpc.BaseRequest;
 import com.praetoriandroid.cameraremote.rpc.BaseResponse;
+import com.praetoriandroid.cameraremote.rpc.GetAvailableSelfTimerRequest;
+import com.praetoriandroid.cameraremote.rpc.GetAvailableSelfTimerResponse;
 import com.praetoriandroid.cameraremote.rpc.StartLiveViewRequest;
 import com.praetoriandroid.cameraremote.rpc.StartLiveViewResponse;
 
@@ -19,14 +22,15 @@ import org.androidannotations.annotations.EBean;
 import org.androidannotations.annotations.UiThread;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 @EBean (scope = EBean.Scope.Singleton)
 public class Rpc {
-
     private static final String RPC_NETWORK = "RPC network";
     private static final int SSDP_TIMEOUT = 1000;
     private static final int CONNECTION_TIMEOUT = 1000;
@@ -53,10 +57,15 @@ public class Rpc {
     private final Map<Object, ResponseHandler<?>> responseHandlers = new HashMap<Object, ResponseHandler<?>>();
     private LiveViewFetcher liveViewFetcher = new LiveViewFetcher();
     private volatile boolean liveViewInProgress;
+    private List<Integer> availableSelfTimers = Collections.emptyList();
 
     public Rpc() {
         liveViewFetcher.setConnectionTimeout(CONNECTION_TIMEOUT);
         connect();
+    }
+
+    public List<Integer> getAvailableSelfTimers() {
+        return availableSelfTimers;
     }
 
     @Background (serial = RPC_NETWORK)
@@ -74,6 +83,10 @@ public class Rpc {
             rpcClient = new RpcClient(cameraServiceUrl);
             rpcClient.setConnectionTimeout(CONNECTION_TIMEOUT);
             rpcClient.sayHello();
+            GetAvailableSelfTimerResponse selfTimers = rpcClient.send(new GetAvailableSelfTimerRequest());
+            if (selfTimers.isOk()) {
+                availableSelfTimers = Ints.asList(selfTimers.getAvailableTimers());
+            }
             onConnected(cameraServiceUrl);
         } catch (IOException e) {
             onConnectionFailed(e);
@@ -220,7 +233,7 @@ public class Rpc {
         }.start();
     }
 
-    private static class ErrorResponseException extends RpcException {
+    public static class ErrorResponseException extends RpcException {
         private int errorCode;
 
         public ErrorResponseException(int errorCode) {

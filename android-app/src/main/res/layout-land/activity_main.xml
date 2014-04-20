@@ -18,10 +18,34 @@
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
         android:layout_margin="@dimen/default_spacing"
-        android:background="@drawable/shot_button"
+        android:background="@drawable/button_shot"
         android:contentDescription="@string/cd_shot"
         android:enabled="false"
         tools:enabled="true" />
+
+    <com.praetoriandroid.cameraremote.app.SelfTimerSelector_
+        android:id="@+id/self_timer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:padding="@dimen/default_spacing"
+        android:src="@drawable/ic_self_timer"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/cd_self_timer"
+        tools:visibility="visible" />
+
+    <ImageButton
+        android:id="@+id/zoom"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toLeftOf="@id/self_timer"
+        android:layout_alignParentBottom="true"
+        android:padding="@dimen/default_spacing"
+        android:src="@drawable/ic_zoom"
+        android:background="@android:color/transparent"
+        android:contentDescription="@string/cd_zoom"
+        tools:visibility="visible" />
 
     <include
         android:id="@+id/progress"

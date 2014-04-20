@@ -49,11 +49,14 @@ dependencies {
     compile 'com.android.support:support-v4:+'
 
     compile project(path: ':sony-camera-remote-lib')
+    compile project(path: ':praetorian-widgets-lib')
 
     compile 'com.google.code.gson:gson:2.2.4'
 
     apt "org.androidannotations:androidannotations:$AAVersion"
     compile "org.androidannotations:androidannotations-api:$AAVersion"
+
+    compile 'com.google.guava:guava:17.0-rc2'
 }
 
 apt {
